@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ammattipeli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fredoka:wght@500;600&display=swap">
+<style>
+/* Layout: one centred column, one screen at a time, big tap targets, each ammatti has its own colour. */
+:root {
+  --bg: #EAF1F8;
+  --surface: #FFFFFF;
+  --ink: #13213C;
+  --muted: #475773;
+  --line: #C3D1E3;
+  --accent: #FFC72C;
+  --accent-ink: #13213C;
+  --focus: #1F5FD1;
+  --ps: 62%;
+  --pl: 38%;
+  --tint-s: 80%;
+  --tint-l: 91%;
+  --font-display: 'Fredoka', system-ui, sans-serif;
+  --font-body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1729;
+    --surface: #18243D;
+    --ink: #F1F5FB;
+    --muted: #AEBCD5;
+    --line: #2E3F61;
+    --accent: #FFC72C;
+    --accent-ink: #13213C;
+    --focus: #8DB4FF;
+    --ps: 72%;
+    --pl: 68%;
+    --tint-s: 35%;
+    --tint-l: 24%;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1729;
+  --surface: #18243D;
+  --ink: #F1F5FB;
+  --muted: #AEBCD5;
+  --line: #2E3F61;
+  --accent: #FFC72C;
+  --accent-ink: #13213C;
+  --focus: #8DB4FF;
+  --ps: 72%;
+  --pl: 68%;
+  --tint-s: 35%;
+  --tint-l: 24%;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.5;
+  padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  min-height: 100vh;
+}
+main { max-width: 640px; margin: 0 auto; display: grid; gap: 20px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; line-height: 1.15; text-wrap: balance; margin: 0; }
+p { margin: 0; }
+:focus-visible { outline: 4px solid var(--focus); outline-offset: 3px; }
+
+.prof { --c: hsl(var(--h) var(--ps) var(--pl)); --t: hsl(var(--h) var(--tint-s) var(--tint-l)); }
+.ico { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.tile { display: grid; place-items: center; background: var(--t); color: var(--c); border-radius: 18px; }
+
+.btn {
+  font: inherit; font-family: var(--font-display); font-weight: 600; font-size: 1.3rem;
+  min-height: 64px; padding: 14px 28px; border-radius: 18px; border: 0; cursor: pointer;
+  background: var(--accent); color: var(--accent-ink);
+  box-shadow: 0 5px 0 rgba(19, 33, 60, 0.35);
+  transition: transform .08s ease, box-shadow .08s ease;
+}
+.btn:active { transform: translateY(4px); box-shadow: 0 1px 0 rgba(19, 33, 60, 0.35); }
+.btn.quiet { background: transparent; color: var(--ink); box-shadow: none; border: 3px solid var(--line); font-size: 1.1rem; min-height: 56px; }
+.btn.quiet:active { transform: none; }
+
+/* start */
+.intro { display: grid; gap: 14px; padding-top: 8px; }
+.intro h1 { font-size: clamp(2rem, 8vw, 3rem); }
+.intro p { color: var(--muted); font-size: 1.2rem; }
+.parade { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-block: 8px; }
+.parade .tile { aspect-ratio: 1; padding: 14px; }
+@media (min-width: 520px) { .parade { grid-template-columns: repeat(6, 1fr); } }
+.go { justify-self: start; }
+
+/* quiz */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.count { font-family: var(--font-display); font-weight: 500; color: var(--muted); font-size: 1.1rem; }
+.dots { display: grid; grid-template-columns: repeat(12, 1fr); gap: 5px; }
+.dots span { height: 10px; border-radius: 6px; background: var(--line); }
+.dots span.done { background: var(--accent); }
+.dots span.now { background: var(--ink); }
+.q { font-size: clamp(1.6rem, 6vw, 2.2rem); padding-block: 6px 2px; }
+.q:focus { outline: none; }
+.opts { display: grid; gap: 14px; }
+.opt {
+  display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 16px;
+  min-height: 84px; padding: 10px 16px 10px 10px; text-align: left;
+  font: inherit; font-size: 1.2rem; font-weight: 700; color: var(--ink);
+  background: var(--surface); border: 3px solid var(--line); border-radius: 22px; cursor: pointer;
+  transition: border-color .12s ease, background-color .12s ease, transform .12s ease;
+}
+.opt .tile { width: 64px; height: 64px; padding: 11px; border-radius: 16px; }
+.opt:hover { border-color: var(--c); }
+.opt:active { transform: scale(0.985); }
+.opt.picked { border-color: var(--c); background: var(--t); }
+.opt.picked .tile { background: var(--c); color: var(--surface); }
+.note { color: var(--muted); font-size: 1rem; }
+
+/* result */
+.hero { display: grid; gap: 14px; justify-items: start; background: var(--t); border-radius: 28px; padding: 24px 20px; }
+.hero .portrait { width: min(260px, 100%); height: auto; aspect-ratio: 1; align-self: center; justify-self: center; }
+.hero .lead { font-family: var(--font-display); font-weight: 500; font-size: 1.2rem; color: var(--muted); }
+.hero h2 { font-size: clamp(2rem, 9vw, 3rem); color: var(--ink); overflow-wrap: anywhere; }
+.hero p.about { font-size: 1.2rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip { font-weight: 700; font-size: 1rem; padding: 6px 14px; border-radius: 999px; background: var(--surface); color: var(--ink); border: 2px solid var(--c); }
+.also h3 { font-size: 1.3rem; margin-bottom: 10px; }
+.also ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.also li { display: grid; grid-template-columns: 60px minmax(0, 1fr); gap: 14px; align-items: center; background: var(--surface); border: 3px solid var(--line); border-radius: 20px; padding: 10px; }
+.also .tile { width: 60px; height: 60px; padding: 11px; border-radius: 14px; }
+.also strong { font-family: var(--font-display); font-weight: 600; font-size: 1.2rem; display: block; overflow-wrap: anywhere; }
+.also span.small { color: var(--muted); font-size: 1rem; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+html { color-scheme: light; }
+body { margin: 0; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<main id="app">
+  <section id="s-start" class="intro" aria-labelledby="t-start">
+    <h1 id="t-start">Mikä ammatti sopisi sinulle?</h1>
+    <p>Vastaa 12 kysymykseen. Valitse se vaihtoehto, joka tuntuu sinusta parhaalta. Vastauksia ei ole oikeita eikä vääriä.</p>
+    <div class="parade" id="parade" aria-hidden="true"></div>
+    <button class="btn go" id="go" type="button">Aloita peli</button>
+  </section>
+
+  <section id="s-quiz" hidden aria-live="polite">
+    <div style="display:grid;gap:18px">
+      <div class="top">
+        <button class="btn quiet" id="back" type="button">Takaisin</button>
+        <span class="count" id="count"></span>
+      </div>
+      <div class="dots" id="dots" aria-hidden="true"></div>
+      <h2 class="q" id="q" tabindex="-1"></h2>
+      <div class="opts" id="opts"></div>
+      <p class="note">Valitse yksi vaihtoehto.</p>
+    </div>
+  </section>
+
+  <section id="s-result" hidden aria-live="polite">
+    <div style="display:grid;gap:22px">
+      <div class="hero prof" id="hero"></div>
+      <div class="also" id="also"></div>
+      <div class="actions">
+        <button class="btn" id="again" type="button">Pelaa uudelleen</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  var svgs = {
+    puutarhuri: '<path d="M24 42V22"/><path d="M24 26c-9 0-13-6-13-13 9 0 13 5 13 13z"/><path d="M24 22c0-8 5-12 13-12 0 8-4 12-13 12z"/>',
+    toimitila: '<path d="M10 24h22l-3 18H13z"/><path d="M15 24c0-5 3-8 6-8s6 3 6 8"/><path d="M39 6L27 24"/>',
+    koti: '<path d="M16 8L6 15l5 7 5-3v21h16V19l5 3 5-7-10-7c-1 4-4 6-8 6s-7-2-8-6z"/>',
+    kiinteisto: '<circle cx="15" cy="24" r="8"/><path d="M23 24h20M36 24v7M42 24v5"/>',
+    merkonomi: '<path d="M9 16h30l-2 26H11z"/><path d="M17 20v-6a7 7 0 0 1 14 0v6"/>',
+    pienkone: '<circle cx="24" cy="24" r="12"/><circle cx="24" cy="24" r="4"/><path d="M24 5v7M24 36v7M5 24h7M36 24h7M10.5 10.5l5 5M32.5 32.5l5 5M37.5 10.5l-5 5M15.5 32.5l-5 5"/>',
+    it: '<rect x="6" y="9" width="36" height="24" rx="3"/><path d="M18 41h12M24 33v8"/>',
+    kokki: '<path d="M14 28a8 8 0 0 1 1-15 9 9 0 0 1 18 0 8 8 0 0 1 1 15z"/><path d="M15 28v12h18V28"/>',
+    auto: '<path d="M6 30l3-9a4 4 0 0 1 4-3h22a4 4 0 0 1 4 3l3 9v6H6z"/><circle cx="14" cy="36" r="4"/><circle cx="34" cy="36" r="4"/>',
+    logistiikka: '<path d="M6 15l18-9 18 9v20l-18 9-18-9z"/><path d="M6 15l18 9 18-9M24 24v20"/>',
+    kuva: '<path d="M5 14h10l3-5h12l3 5h10v26H5z"/><circle cx="24" cy="26" r="8"/>',
+    artesaani: '<circle cx="12" cy="36" r="6"/><circle cx="12" cy="12" r="6"/><path d="M17 15l26 21M17 33L43 12"/>'
+  };
+
+  var P = {
+    puutarhuri:  { name: 'Puutarhuri', h: 135, places: ['Pieksämäki'], text: 'Hoidat kasveja, pihoja ja kasvihuoneita. Olet paljon ulkona ja näet, miten kasvit kasvavat.' },
+    toimitila:   { name: 'Toimitilahuoltaja', h: 195, places: ['Jyväskylä', 'Pieksämäki'], text: 'Pidät tilat siisteinä ja turvallisina. Käytät siivouskoneita ja huolehdit, että kaikki on puhdasta.' },
+    koti:        { name: 'Kodinhuoltaja', h: 330, places: ['Jyväskylä', 'Pieksämäki'], text: 'Autat kodin arjessa. Siivous, pyykit ja ruoanlaitto kuuluvat työhösi.' },
+    kiinteisto:  { name: 'Kiinteistönhoitaja', h: 30, places: ['Jyväskylä', 'Pieksämäki'], text: 'Huolehdit, että talot ja pihat ovat kunnossa. Korjaat pieniä vikoja ja hoidat ulkoalueita.' },
+    merkonomi:   { name: 'Merkonomi', h: 265, places: ['Jyväskylä', 'Pieksämäki'], text: 'Työskentelet kaupassa tai toimistossa. Palvelet asiakkaita ja käytät kassaa ja tietokonetta.' },
+    pienkone:    { name: 'Pienkonemekaanikko', h: 12, places: ['Pieksämäki'], text: 'Korjaat pieniä koneita, kuten mopoja, moottorisahoja ja ruohonleikkureita.' },
+    it:          { name: 'IT-tukihenkilö', h: 215, places: ['Pieksämäki'], text: 'Autat ihmisiä tietokoneiden ja puhelinten kanssa. Asennat laitteita ja ratkot ongelmia.' },
+    kokki:       { name: 'Kokki', h: 48, places: ['Pieksämäki'], text: 'Teet ruokaa keittiössä ja pidät keittiön siistinä. Työtä tehdään yhdessä porukassa.' },
+    auto:        { name: 'Automekaanikko', h: 232, places: ['Jyväskylä'], text: 'Huollat ja korjaat autoja. Etsit vikoja ja vaihdat osia.' },
+    logistiikka: { name: 'Palvelulogistiikkatyöntekijä', h: 165, places: ['Jyväskylä'], text: 'Työskentelet varastossa. Otat vastaan tavaroita, keräät tilauksia ja ajat trukkia.' },
+    kuva:        { name: 'Kuvallisen ilmaisun toteuttaja', h: 295, places: ['Jyväskylä'], text: 'Teet kuvia, videoita ja mainoksia kameralla ja tietokoneella.' },
+    artesaani:   { name: 'Artesaani', h: 350, places: ['Jyväskylä'], text: 'Valmistat käsin kauniita ja hyödyllisiä tuotteita esimerkiksi kankaasta, puusta ja muista materiaaleista.' }
+  };
+
+  var Q = [
+    { q: 'Sinulla on vapaapäivä. Mitä tekisit mieluiten?', o: [
+      ['Hoitaisin kasveja tai pihaa', 'puutarhuri'],
+      ['Korjaisin jotain konetta', 'pienkone'],
+      ['Laittaisin ruokaa', 'kokki'],
+      ['Piirtäisin tai ottaisin kuvia', 'kuva'],
+      ['Pelaisin tai säätäisin tietokonetta', 'it'] ] },
+    { q: 'Pihalla on lehtiä ja roskia. Mitä teet?', o: [
+      ['Haravoin ja istutan kukkia', 'puutarhuri'],
+      ['Tarkistan, että ovet ja valot toimivat', 'kiinteisto'],
+      ['Siivoan käytävän lattian', 'toimitila'],
+      ['Kokeilen, saanko ruohonleikkurin käyntiin', 'pienkone'],
+      ['Kärrään roskat pois kärryllä', 'logistiikka'] ] },
+    { q: 'Auto ei käynnisty. Mitä teet?', o: [
+      ['Avaan konepellin ja etsin vian', 'auto'],
+      ['Soitan ja sovin korjausajan', 'merkonomi'],
+      ['Siirrän tavarat toiseen autoon', 'logistiikka'],
+      ['Etsin netistä ohjeen vian korjaamiseen', 'it'] ] },
+    { q: 'Kaverin tietokone ei toimi. Mitä teet?', o: [
+      ['Etsin vian ja korjaan sen', 'it'],
+      ['Teen koneelle hienon taustakuvan', 'kuva'],
+      ['Kirjoitan ohjeet, miten sitä käytetään', 'merkonomi'],
+      ['Ompelen koneelle kivan suojapussin', 'artesaani'] ] },
+    { q: 'Kauppaan tulee iso tavaralähetys. Mitä teet?', o: [
+      ['Nostan laatikot hyllyyn trukilla', 'logistiikka'],
+      ['Myyn tavarat asiakkaille', 'merkonomi'],
+      ['Kokeilen, mitä niistä voisi tehdä itse', 'artesaani'],
+      ['Katson, onko siinä raaka-aineita keittiöön', 'kokki'],
+      ['Siivoan roskat ja pakkaukset pois', 'toimitila'] ] },
+    { q: 'Kavereita tulee kylään. Mitä teet?', o: [
+      ['Teen herkullista ruokaa', 'kokki'],
+      ['Siivoan kodin ja pesen pyykit', 'koti'],
+      ['Teen koristeita ja sisustan', 'artesaani'],
+      ['Laitan pelit ja laitteet toimimaan', 'it'],
+      ['Poimin pihalta kukkia pöytään', 'puutarhuri'] ] },
+    { q: 'Mikä työpaikka tuntuu sinusta mukavimmalta?', o: [
+      ['Keittiö', 'kokki'],
+      ['Auton korjaamo', 'auto'],
+      ['Kasvihuone tai puutarha', 'puutarhuri'],
+      ['Varasto', 'logistiikka'],
+      ['Kauppa tai toimisto', 'merkonomi'] ] },
+    { q: 'Rakennuksessa vuotaa hana. Mitä teet?', o: [
+      ['Korjaan hanan', 'kiinteisto'],
+      ['Pyyhin vedet ja puhdistan lattian', 'toimitila'],
+      ['Kuivaan pyyhkeet ja laitan kodin kuntoon', 'koti'],
+      ['Ilmoitan viasta ja tilaan korjaajan', 'merkonomi'] ] },
+    { q: 'Saat valita työvälineen. Mikä sopii sinulle?', o: [
+      ['Jakoavain ja ruuvimeisseli', 'pienkone'],
+      ['Kamera ja tabletti', 'kuva'],
+      ['Ompelukone ja sakset', 'artesaani'],
+      ['Siivousvaunu', 'toimitila'],
+      ['Veitsi ja kattila', 'kokki'] ] },
+    { q: 'Mistä tykkäät työssä eniten?', o: [
+      ['Siitä, että tila on raikas ja siisti', 'toimitila'],
+      ['Siitä, että kodin asiat ovat kunnossa', 'koti'],
+      ['Siitä, että talo toimii', 'kiinteisto'],
+      ['Siitä, että saan auttaa tietokoneiden kanssa', 'it'],
+      ['Siitä, että näen kasvien kasvavan', 'puutarhuri'] ] },
+    { q: 'Työpäivä alkaa. Mikä tehtävä odottaa mieluiten?', o: [
+      ['Vaihdan auton renkaat', 'auto'],
+      ['Keräilen tilauksia varastosta', 'logistiikka'],
+      ['Palvelen asiakkaita kassalla', 'merkonomi'],
+      ['Editoin videota', 'kuva'],
+      ['Valmistelen lounaan', 'kokki'] ] },
+    { q: 'Mikä kehu ilahduttaisi sinua eniten?', o: [
+      ['Ruoka oli tosi hyvää!', 'kokki'],
+      ['Kuva on upea!', 'kuva'],
+      ['Laite toimii taas, kiitos!', 'it'],
+      ['Piha näyttää tosi hienolta!', 'puutarhuri'],
+      ['Auto kulkee taas hienosti!', 'auto'] ] }
+  ];
+
+  var SKIN = ['#F2C6A0', '#E0A97E', '#C98B63', '#F7D6B8'];
+  var HAIR = ['#3B2A20', '#1F1A17', '#7A4A2A', '#B5651D'];
+  var HATS = {
+    kokki: '<path d="M84 70a14 14 0 0 1 4-27 18 18 0 0 1 32-4 18 18 0 0 1 32 4 14 14 0 0 1 4 27z" fill="#fff" stroke="#C9D6E6" stroke-width="2"/><rect x="86" y="64" width="68" height="12" rx="3" fill="#fff" stroke="#C9D6E6" stroke-width="2"/>',
+    kiinteisto: '<path d="M80 74a40 40 0 0 1 80 0z" fill="#FFC72C"/><rect x="72" y="72" width="96" height="9" rx="4" fill="#E0A100"/><rect x="114" y="36" width="12" height="38" fill="#E0A100" opacity=".55"/>',
+    cap: '<path d="M80 74a40 40 0 0 1 80 0z" fill="var(--c)"/><path d="M146 72h38a6 6 0 0 1 0 10h-38z" fill="#13213C" fill-opacity=".5"/>',
+    puutarhuri: '<ellipse cx="120" cy="72" rx="68" ry="12" fill="#E7C676"/><path d="M88 72a32 30 0 0 1 64 0z" fill="#F0D58C"/><rect x="88" y="63" width="64" height="8" fill="var(--c)"/>',
+    it: '<path d="M78 100a42 46 0 0 1 84 0" fill="none" stroke="#2B2B3A" stroke-width="7"/><rect x="70" y="92" width="14" height="26" rx="6" fill="var(--c)"/><rect x="156" y="92" width="14" height="26" rx="6" fill="var(--c)"/>',
+    kuva: '<ellipse cx="116" cy="62" rx="46" ry="16" fill="var(--c)" transform="rotate(-8 116 62)"/><circle cx="112" cy="44" r="4.5" fill="var(--c)"/>',
+    artesaani: '<path d="M78 80Q120 62 162 80V92Q120 76 78 92z" fill="var(--c)"/>',
+    koti: '<circle cx="120" cy="48" r="14" fill="HAIR"/>'
+  };
+  var HAT_FOR = { auto: 'cap', pienkone: 'cap', logistiikka: 'cap' };
+
+  function portrait(k, name) {
+    var idx = Object.keys(P).indexOf(k);
+    var skin = SKIN[idx % SKIN.length], hair = HAIR[(idx + 1) % HAIR.length];
+    var hatKey = HAT_FOR[k] || k;
+    var hat = (HATS[hatKey] || '').replace('HAIR', hair);
+    var tag = k === 'merkonomi' ? '<rect x="136" y="178" width="26" height="16" rx="3" fill="#fff"/><path d="M141 184h16M141 189h10" stroke="#13213C" stroke-width="2" stroke-linecap="round"/>' : '';
+    var vest = k === 'logistiikka' || k === 'kiinteisto' ? '<path d="M96 162l-8 70M144 162l8 70" stroke="#FFC72C" stroke-width="9"/>' : '';
+    return '<svg class="portrait" viewBox="0 0 240 240" role="img" aria-label="Piirros hymyilevästä henkilöstä, ammattina ' + name.toLowerCase() + '">' +
+      '<circle cx="120" cy="120" r="116" fill="var(--surface)" fill-opacity=".7"/>' +
+      '<path d="M44 224Q44 160 120 152Q196 160 196 224a116 116 0 0 1-152 0z" fill="var(--c)"/>' + vest +
+      '<path d="M104 152l16 24 16-24z" fill="#fff"/>' +
+      '<rect x="110" y="132" width="20" height="24" rx="8" fill="' + skin + '"/>' +
+      '<circle cx="120" cy="100" r="42" fill="' + skin + '"/>' +
+      '<path d="M78 98Q76 56 120 56Q164 56 162 98Q150 76 120 76Q90 76 78 98z" fill="' + hair + '"/>' +
+      hat +
+      '<circle cx="106" cy="100" r="4.5" fill="#2B2B3A"/><circle cx="134" cy="100" r="4.5" fill="#2B2B3A"/>' +
+      '<circle cx="96" cy="114" r="6" fill="#F28B82" fill-opacity=".45"/><circle cx="144" cy="114" r="6" fill="#F28B82" fill-opacity=".45"/>' +
+      '<path d="M104 114Q120 132 136 114" fill="none" stroke="#2B2B3A" stroke-width="4" stroke-linecap="round"/>' +
+      tag +
+      '<circle cx="188" cy="190" r="34" fill="var(--surface)" stroke="var(--c)" stroke-width="4"/>' +
+      '<g transform="translate(162 164)" style="color:var(--c)"><svg width="52" height="52" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">' + svgs[k] + '</svg></g>' +
+      '</svg>';
+  }
+
+  function icon(k) {
+    return '<svg class="ico" viewBox="0 0 48 48" aria-hidden="true" focusable="false">' + svgs[k] + '</svg>';
+  }
+  function $(id) { return document.getElementById(id); }
+  function shuffle(a) {
+    a = a.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function show(id) {
+    ['s-start', 's-quiz', 's-result'].forEach(function (s) { $(s).hidden = (s !== id); });
+    window.scrollTo(0, 0);
+  }
+
+  var qi = 0, answers = [], locked = false;
+
+  // start screen icon parade
+  var parade = $('parade');
+  Object.keys(P).forEach(function (k) {
+    var d = document.createElement('div');
+    d.className = 'tile prof';
+    d.style.setProperty('--h', P[k].h);
+    d.innerHTML = icon(k);
+    parade.appendChild(d);
+  });
+
+  function startGame() {
+    answers = [];
+    qi = 0;
+    show('s-quiz');
+    renderQ();
+  }
+
+  function renderQ() {
+    locked = false;
+    var item = Q[qi];
+    $('count').textContent = 'Kysymys ' + (qi + 1) + ' / ' + Q.length;
+    var dots = $('dots');
+    dots.innerHTML = '';
+    for (var i = 0; i < Q.length; i++) {
+      var s = document.createElement('span');
+      if (i < qi) s.className = 'done';
+      else if (i === qi) s.className = 'now';
+      dots.appendChild(s);
+    }
+    $('q').textContent = item.q;
+    var box = $('opts');
+    box.innerHTML = '';
+    shuffle(item.o).forEach(function (opt) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'opt prof';
+      b.style.setProperty('--h', P[opt[1]].h);
+      b.innerHTML = '<span class="tile">' + icon(opt[1]) + '</span><span></span>';
+      b.lastChild.textContent = opt[0];
+      b.addEventListener('click', function () { pick(b, opt[1]); });
+      box.appendChild(b);
+    });
+    $('q').focus({ preventScroll: true });
+  }
+
+  function pick(btn, key) {
+    if (locked) return;
+    locked = true;
+    btn.classList.add('picked');
+    answers[qi] = key;
+    setTimeout(function () {
+      if (qi < Q.length - 1) { qi++; renderQ(); }
+      else { finish(); }
+    }, 380);
+  }
+
+  function goBack() {
+    if (qi === 0) { show('s-start'); return; }
+    qi--;
+    renderQ();
+  }
+
+  function finish() {
+    var score = {}, last = {};
+    answers.forEach(function (k, i) { score[k] = (score[k] || 0) + 1; last[k] = i; });
+    var ranked = Object.keys(score).sort(function (a, b) {
+      return (score[b] - score[a]) || (last[b] - last[a]);
+    });
+    var top = ranked[0], p = P[top];
+
+    var hero = $('hero');
+    hero.style.setProperty('--h', p.h);
+    hero.innerHTML =
+      portrait(top, p.name) +
+      '<p class="lead">Sinulle sopii</p>' +
+      '<h2></h2>' +
+      '<p class="about"></p>' +
+      '<div class="chips"><span class="note">Opiskelupaikka:</span></div>';
+    hero.querySelector('h2').textContent = p.name;
+    hero.querySelector('.about').textContent = p.text;
+    var chips = hero.querySelector('.chips');
+    p.places.forEach(function (pl) {
+      var c = document.createElement('span');
+      c.className = 'chip';
+      c.textContent = pl;
+      chips.appendChild(c);
+    });
+
+    // two more suggestions: next best answers, topped up with the nearest remaining ones
+    var more = ranked.slice(1, 3);
+    if (more.length < 2) {
+      var rest = shuffle(Object.keys(P).filter(function (k) { return k !== top && more.indexOf(k) < 0; }));
+      while (more.length < 2) more.push(rest.shift());
+    }
+    var also = $('also');
+    also.innerHTML = '<h3>Nämä ammatit voisivat sopia myös</h3><ul></ul>';
+    var ul = also.querySelector('ul');
+    more.forEach(function (k) {
+      var li = document.createElement('li');
+      li.className = 'prof';
+      li.style.setProperty('--h', P[k].h);
+      li.innerHTML = '<span class="tile">' + icon(k) + '</span><div><strong></strong><span class="small"></span></div>';
+      li.querySelector('strong').textContent = P[k].name;
+      li.querySelector('.small').textContent = P[k].places.join(' ja ');
+      ul.appendChild(li);
+    });
+    show('s-result');
+  }
+
+  $('go').addEventListener('click', startGame);
+  $('back').addEventListener('click', goBack);
+  $('again').addEventListener('click', function () { show('s-start'); });
+})();
+</script>
+
+</body>
+</html>
